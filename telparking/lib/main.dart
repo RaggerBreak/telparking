@@ -71,6 +71,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _checkLocationPermission() async {
+    /**
+     * To keep asking the user to choose "Allow" or "Deny and don't show again"
+     * replace the condition below with this one:
+     *
+     * if (await Permission.location.request().isGranted) {
+     **/
     if (await Permission.location.isGranted) {
       setState(() {
         _visibleButton = true;
