@@ -3,9 +3,9 @@ import 'package:url_launcher/url_launcher.dart' as launcher;
 import 'package:geolocator/geolocator.dart';
 
 class Barrier {
-  final String name;
-  final String phoneNumber;
-  final Position position;
+   String name;
+   String phoneNumber;
+   Position position;
 
   Barrier({this.name, this.phoneNumber, this.position});
 }
@@ -15,6 +15,11 @@ var barriers = [
   Barrier(name: "WZ", phoneNumber: "222222", position:Position(latitude: 51.234952, longitude: 22.549711)),
   Barrier(name: "Centech", phoneNumber: "333333", position: Position(latitude: 51.236386, longitude: 22.547813))
 ];
+
+double distanceFrom(Position a, Position b) {
+  return Geolocator.distanceBetween(
+      a.latitude, a.longitude, b.latitude, b.longitude);
+}
 
 void main() {
   runApp(MyApp());
@@ -48,6 +53,21 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
+  Barrier nearestBarrier = new Barrier();
+
+  void _nearestBarrier() async {
+    var currentPosition = await Geolocator.getCurrentPosition();
+
+    barriers.sort((a, b) =>
+        distanceFrom(currentPosition, a.position).compareTo(distanceFrom(currentPosition, b.position)));
+
+    setState(() {
+      nearestBarrier = barriers.first;
+    });
+
+    launcher.launch("tel://${nearestBarrier.phoneNumber}");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,6 +84,11 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             );
           },
-        ));
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _nearestBarrier,
+          child: Icon(Icons.gps_fixed),
+        ),
+    );
   }
 }
