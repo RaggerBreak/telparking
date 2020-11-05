@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart' as launcher;
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class Barrier {
    String name;
@@ -16,7 +17,7 @@ var barriers = [
   Barrier(name: "Centech", phoneNumber: "333333", position: Position(latitude: 51.236386, longitude: 22.547813))
 ];
 
-double distanceFrom(Position a, Position b) {
+double _distanceFrom(Position a, Position b) {
   return Geolocator.distanceBetween(
       a.latitude, a.longitude, b.latitude, b.longitude);
 }
@@ -54,12 +55,13 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   Barrier nearestBarrier = new Barrier();
+  bool _visibleButton = false;
 
   void _nearestBarrier() async {
     var currentPosition = await Geolocator.getCurrentPosition();
 
     barriers.sort((a, b) =>
-        distanceFrom(currentPosition, a.position).compareTo(distanceFrom(currentPosition, b.position)));
+        _distanceFrom(currentPosition, a.position).compareTo(_distanceFrom(currentPosition, b.position)));
 
     setState(() {
       nearestBarrier = barriers.first;
@@ -68,8 +70,21 @@ class _MyHomePageState extends State<MyHomePage> {
     launcher.launch("tel://${nearestBarrier.phoneNumber}");
   }
 
+  void _checkLocationPermission() async {
+    if (await Permission.location.isGranted) {
+      setState(() {
+        _visibleButton = true;
+      });
+    }
+    else
+      setState(() {
+        _visibleButton = false;
+      });
+  }
+
   @override
   Widget build(BuildContext context) {
+    _checkLocationPermission();
     return Scaffold(
         appBar: AppBar(title: Text("Kontakty")),
         body: ListView.builder(
@@ -85,10 +100,13 @@ class _MyHomePageState extends State<MyHomePage> {
             );
           },
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _nearestBarrier,
-          child: Icon(Icons.gps_fixed),
-        ),
+        floatingActionButton: Visibility(
+              child:  FloatingActionButton(
+                onPressed: _nearestBarrier,
+                child: Icon(Icons.gps_fixed),
+              ),
+          visible: _visibleButton,
+            )
     );
   }
 }
